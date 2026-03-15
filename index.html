@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite US Stock Screener</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --glass-bg: rgba(20, 25, 40, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary: #00f0ff;
+            --primary-glow: rgba(0, 240, 255, 0.4);
+            --secondary: #ff0055;
+            --text-main: #ffffff;
+            --text-muted: #a0a5b5;
+            --up: #00e676;
+            --down: #ff1744;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 0, 85, 0.15), transparent 25%);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--primary), #a64dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-group input,
+        .control-group select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .control-group select option {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 10px;
+        }
+
+        .btn-scan {
+            background: linear-gradient(135deg, var(--primary), #00bfff);
+            color: #000;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            letter-spacing: 1px;
+        }
+
+        .btn-scan:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px var(--primary-glow);
+        }
+
+        .btn-scan:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .btn-scan:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Top Buttons (Settings & Mobile Mode) */
+        .top-bar {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .settings-btn, .mobile-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 10px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .settings-btn:hover, .mobile-btn:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-content {
+            background: var(--bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .settings-content h2 {
+            margin-bottom: 5px;
+            font-weight: 800;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, var(--primary), #a64dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .active-status-box {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .active-status-box.inactive {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 1.05rem;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(4px);
+            box-shadow: -4px 0 0 var(--primary);
+        }
+
+        .ticker {
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 1.15rem;
+        }
+
+        .company-name {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: block;
+            margin-top: 2px;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .asset-link {
+            text-decoration: none;
+            display: inline-flex;
+            flex-direction: column;
+        }
+
+        .up {
+            color: var(--up);
+            font-weight: 600;
+        }
+
+        .down {
+            color: var(--down);
+            font-weight: 600;
+        }
+
+        /* Loader */
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 0;
+            display: none;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--glass-border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-msg {
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        /* Manual Mobile Mode using class */
+        body.mobile-mode h1 {
+            font-size: 2rem;
+        }
+
+        body.mobile-mode .glass-panel {
+            padding: 15px;
+        }
+
+        body.mobile-mode .controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        body.mobile-mode .control-group {
+            min-width: 100%;
+        }
+
+        body.mobile-mode .settings-content {
+            width: 95%;
+            padding: 20px;
+        }
+
+        body.mobile-mode .settings-content {
+            width: 95%;
+            padding: 20px;
+        }
+
+        /* Mobile Card Table Layout */
+        body.mobile-mode table,
+        body.mobile-mode thead,
+        body.mobile-mode tbody,
+        body.mobile-mode th,
+        body.mobile-mode td,
+        body.mobile-mode tr {
+            display: block;
+            width: 100%;
+        }
+
+        body.mobile-mode thead tr {
+            display: none;
+        }
+
+        body.mobile-mode tr {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            padding: 15px;
+            height: auto;
+        }
+
+        body.mobile-mode td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 0;
+            text-align: right;
+            font-size: 1.05rem;
+        }
+
+        body.mobile-mode td:last-child {
+            border-bottom: none;
+        }
+
+        body.mobile-mode td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-right: 15px;
+        }
+
+        body.mobile-mode .asset-link {
+            flex-direction: row;
+            align-items: center;
+            gap: 15px;
+        }
+
+        body.mobile-mode .company-name {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <button class="mobile-btn" onclick="toggleMobileMode()">📱 Mobile Mode</button>
+        <button class="settings-btn" onclick="toggleSettings(true)">⚙️ Alerts</button>
+    </div>
+
+    <div class="settings-modal" id="settingsModal" onclick="if(event.target === this) toggleSettings(false)">
+        <div class="settings-content">
+            <h2>Alert Settings</h2>
+
+            <div id="activeStatusBox" class="active-status-box inactive">
+                🔴 <b>Status:</b> Auto Scan is OFF
+            </div>
+
+            <div class="control-group">
+                <label for="autoScanInterval">Auto Scan</label>
+                <select id="autoScanInterval" onchange="toggleAutoScan()">
+                    <option value="0">Off</option>
+                    <option value="60000">Every 1 Minute</option>
+                    <option value="300000">Every 5 Minutes</option>
+                    <option value="900000">Every 15 Minutes</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="tgToken">TG Bot Token</label>
+                <input type="password" id="tgToken" placeholder="123456:ABC-DEF..." onchange="saveTgSettings()">
+            </div>
+            <div class="control-group">
+                <label for="tgChatId">TG Chat ID</label>
+                <input type="text" id="tgChatId" placeholder="123456789" onchange="saveTgSettings()">
+            </div>
+
+            <button class="close-btn" onclick="toggleSettings(false)">Done</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Quantum Screener</h1>
+            <p class="subtitle">Real-time market scanning powered by TradingView</p>
+        </header>
+
+        <div class="glass-panel">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="strategySelect">Trading Strategy</label>
+                    <select id="strategySelect">
+                        <option value="test">test</option>
+                        <option value="main_rvol">Main RVOL (Strict - >5x RVOL)</option>
+                        <option value="main_rvol_test">Main RVOL (Testing - >1x RVOL)</option>
+                    </select>
+                </div>
+                <button class="btn-scan" id="scanBtn" onclick="runScan()">Scan Market</button>
+            </div>
+        </div>
+
+        <div class="glass-panel" id="resultsPanel" style="display: none;">
+
+            <div class="loader-container" id="loader">
+                <div class="loader"></div>
+                <div class="status-msg">Scanning the matrix...</div>
+            </div>
+
+            <div class="empty-state" id="emptyState">
+                <h3>No signals found</h3>
+                <p>No stocks currently match your criteria. Try adjusting the filters.</p>
+            </div>
+
+            <div class="table-responsive" id="tableContainer">
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Price</th>
+                            <th>Change %</th>
+                            <th>Rel Vol</th>
+                            <th>Stop Loss</th>
+                            <th>Market Cap</th>
+                            <th>Sector</th>
+                            <th>Exchange</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Rows rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Formats large numbers into readable string (e.g. $10.5B, $2.1M)
+        function formatNumber(num) {
+            if (!num) return 'N/A';
+            if (num >= 1e9) return '$' + (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return '$' + (num / 1e6).toFixed(2) + 'M';
+            return '$' + num.toLocaleString();
+        }
+
+        let notifiedTickers = new Set();
+        let autoScanTimer = null;
+
+        window.onload = () => {
+            document.getElementById('tgToken').value = localStorage.getItem('tgToken') || '7861971869:AAG4dfb7hGES48T850PvpaOlyEnAHqz_6KE';
+            document.getElementById('tgChatId').value = localStorage.getItem('tgChatId') || '6526498692';
+        };
+
+        function saveTgSettings() {
+            localStorage.setItem('tgToken', document.getElementById('tgToken').value);
+            localStorage.setItem('tgChatId', document.getElementById('tgChatId').value);
+        }
+
+        function toggleSettings(show) {
+            document.getElementById('settingsModal').style.display = show ? 'flex' : 'none';
+        }
+
+        function toggleMobileMode() {
+            document.body.classList.toggle('mobile-mode');
+        }
+
+        function toggleAutoScan() {
+            const intervalSelect = document.getElementById('autoScanInterval');
+            const strategySelect = document.getElementById('strategySelect');
+            const interval = parseInt(intervalSelect.value);
+            const intervalText = intervalSelect.options[intervalSelect.selectedIndex].text;
+            const strategyText = strategySelect.options[strategySelect.selectedIndex].text;
+
+            if (autoScanTimer) clearInterval(autoScanTimer);
+            saveTgSettings();
+
+            const btn = document.getElementById('scanBtn');
+            const statusBox = document.getElementById('activeStatusBox');
+
+            if (interval > 0) {
+                notifiedTickers.clear();
+                runScan();
+                autoScanTimer = setInterval(runScan, interval);
+                btn.innerText = "Auto-Scanning...";
+                btn.disabled = true;
+
+                statusBox.className = "active-status-box";
+                statusBox.innerHTML = `🟢 <b>Active:</b> ${strategyText} (${intervalText})`;
+            } else {
+                btn.innerText = "Scan Market";
+                btn.disabled = false;
+
+                statusBox.className = "active-status-box inactive";
+                statusBox.innerHTML = `🔴 <b>Status:</b> Auto Scan is OFF`;
+            }
+        }
+
+        async function sendTelegramAlert(ticker, name, price, relVol, riskPct, exchange) {
+            const token = document.getElementById('tgToken').value;
+            const chatId = document.getElementById('tgChatId').value;
+            if (!token || !chatId) return;
+
+            const message = `🚨 <b>New Setup Found!</b>\n\n<b>Asset:</b> ${ticker} (${name})\n<b>Price:</b> $${price.toFixed(2)}\n<b>Rel Vol:</b> ${relVol.toFixed(2)}x\n<b>Stop Risk:</b> -${riskPct}%\n\n<a href="https://www.tradingview.com/chart/?symbol=${exchange}%3A${ticker}">Open Chart</a>`;
+
+            try {
+                await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+            } catch (e) {
+                console.error("Failed to send Telegram alert", e);
+            }
+        }
+
+        async function runScan() {
+            const strategy = document.getElementById('strategySelect').value;
+
+            const btn = document.getElementById('scanBtn');
+            const resultsPanel = document.getElementById('resultsPanel');
+            const loader = document.getElementById('loader');
+            const tableContainer = document.getElementById('tableContainer');
+            const emptyState = document.getElementById('emptyState');
+            const tableBody = document.getElementById('tableBody');
+
+            // UI State
+            btn.disabled = true;
+            btn.innerText = "Scanning...";
+            resultsPanel.style.display = "block";
+            loader.style.display = "flex";
+            tableContainer.style.display = "none";
+            emptyState.style.display = "none";
+            tableBody.innerHTML = '';
+
+            // Base Filters
+            let filters = [
+                { "left": "type", "operation": "in_range", "right": ["stock"] },
+                { "left": "typespecs", "operation": "has_none_of", "right": ["preferred"] },
+                { "left": "exchange", "operation": "in_range", "right": ["NYSE", "NASDAQ", "AMEX"] }
+            ];
+
+            // Apply Strategy Logic
+            if (strategy === "test") {
+                filters.push({ "left": "market_cap_basic", "operation": "greater", "right": 10000000000 });
+                filters.push({ "left": "relative_volume_10d_calc", "operation": "greater", "right": 3 });
+            } else if (strategy === "main_rvol") {
+                filters.push({ "left": "market_cap_basic", "operation": "greater", "right": 10000000000 });
+                filters.push({ "left": "relative_volume_10d_calc", "operation": "egreater", "right": 5 });
+                filters.push({ "left": "close", "operation": "greater", "right": "open" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA20" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA50" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA100" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA200" });
+            } else if (strategy === "main_rvol_test") {
+                filters.push({ "left": "market_cap_basic", "operation": "greater", "right": 10000000000 });
+                filters.push({ "left": "relative_volume_10d_calc", "operation": "egreater", "right": 1.1 });
+                filters.push({ "left": "close", "operation": "greater", "right": "open" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA20" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA50" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA100" });
+                filters.push({ "left": "close", "operation": "greater", "right": "SMA200" });
+            }
+
+            // Construct TradingView Payload
+            const payload = {
+                "filter": filters,
+                "options": { "lang": "en" },
+                "symbols": { "query": { "types": [] }, "tickers": [] },
+                "columns": [
+                    "name", "description", "close", "change",
+                    "relative_volume_10d_calc", "market_cap_basic", "sector", "exchange", "low"
+                ],
+                "sort": { "sortBy": "relative_volume_10d_calc", "sortOrder": "desc" },
+                "range": [0, 100]
+            };
+
+            try {
+                // To avoid CORS preflight (OPTIONS) requests blocking the local file,
+                // we send the request as text/plain. The data is still JSON payload.
+                const response = await fetch("https://scanner.tradingview.com/america/scan", {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("Network response was not ok");
+
+                const json = await response.json();
+
+                loader.style.display = "none";
+
+                if (json.totalCount === 0 || !json.data || json.data.length === 0) {
+                    emptyState.style.display = "block";
+                } else {
+                    renderTable(json.data);
+                    tableContainer.style.display = "block";
+
+                    // Push Telegram Alerts on Auto Scan
+                    const isAutoScan = parseInt(document.getElementById('autoScanInterval').value) > 0;
+                    if (isAutoScan) {
+                        json.data.forEach(item => {
+                            const cols = item.d;
+                            const ticker = cols[0];
+                            const name = cols[1];
+                            const price = cols[2];
+                            const relVol = cols[4];
+                            const exchange = cols[7];
+                            const low = cols[8];
+                            const riskPct = price > 0 ? ((price - low) / price * 100).toFixed(2) : 0;
+
+                            if (!notifiedTickers.has(ticker)) {
+                                notifiedTickers.add(ticker);
+                                sendTelegramAlert(ticker, name, price, relVol, riskPct, exchange);
+                            }
+                        });
+                    }
+                }
+
+            } catch (err) {
+                console.error(err);
+                loader.style.display = "none";
+                emptyState.innerHTML = "<h3>Error fetching data</h3><p>An issue occurred while connecting to TradingView. Local files restricted by CORS.</p>";
+                emptyState.style.display = "block";
+            } finally {
+                const isAutoScan = parseInt(document.getElementById('autoScanInterval').value) > 0;
+                if (!isAutoScan) {
+                    btn.disabled = false;
+                    btn.innerText = "Scan Market";
+                }
+            }
+        }
+
+        function renderTable(data) {
+            const tableBody = document.getElementById('tableBody');
+
+            data.forEach(item => {
+                // item.d is the array of columns matching the payload
+                const cols = item.d;
+                const ticker = cols[0];
+                const name = cols[1];
+                const price = cols[2];
+                const change = cols[3];
+                const relVol = cols[4];
+                const mktCap = cols[5];
+                const sector = cols[6] || 'N/A';
+                const exchange = cols[7];
+                const low = cols[8];
+
+                const changeClass = change >= 0 ? 'up' : 'down';
+                const changeSign = change > 0 ? '+' : '';
+
+                const riskPct = price > 0 ? ((price - low) / price * 100).toFixed(2) : 0;
+
+                const tr = document.createElement('tr');
+                tr.onclick = () => window.open(`https://www.tradingview.com/chart/?symbol=${exchange}%3A${ticker}`, '_blank');
+                tr.innerHTML = `
+                    <td data-label="Asset">
+                        <div class="asset-link">
+                            <span class="ticker">${ticker}</span>
+                            <span class="company-name" title="${name}">${name}</span>
+                        </div>
+                    </td>
+                    <td data-label="Price" style="font-weight: 600;">$${price.toFixed(2)}</td>
+                    <td data-label="Change %" class="${changeClass}">${changeSign}${change.toFixed(2)}%</td>
+                    <td data-label="Rel Vol" style="color: var(--primary); font-weight: 800;">${relVol.toFixed(2)}x</td>
+                    <td data-label="Stop Loss" style="color: var(--down); font-weight: 600;">$${low.toFixed(2)} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">(-${riskPct}%)</span></td>
+                    <td data-label="Market Cap">${formatNumber(mktCap)}</td>
+                    <td data-label="Sector" style="text-align: right;">${sector}</td>
+                    <td data-label="Exchange" style="color: var(--text-muted); font-size: 0.9rem;">${exchange}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+    </script>
+</body>
+
+</html>
