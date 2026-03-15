@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#0b0f19">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
+    <link rel="manifest" href="manifest.json">
     <title>Quantum Screener</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -836,6 +837,13 @@
             });
         }
 
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered!'))
+                    .catch(err => console.log('Service Worker failed:', err));
+            });
+        }
     </script>
 </body>
 
